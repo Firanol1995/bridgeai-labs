@@ -10,11 +10,14 @@ export default function ProjectsClient({ initialProjects = [] }: any) {
     setProjects(initialProjects)
   }, [initialProjects])
 
-  const refresh = async () => {
+  const refresh = async (page = 1) => {
     setLoading(true)
     try {
-      const res = await fetch('/api/projects')
-      if (res.ok) setProjects(await res.json())
+      const res = await fetch(`/api/projects?page=${page}&pageSize=10`)
+      if (res.ok) {
+        const json = await res.json()
+        setProjects(json.items || [])
+      }
     } catch (e) {}
     setLoading(false)
   }
@@ -75,6 +78,14 @@ export default function ProjectsClient({ initialProjects = [] }: any) {
             )}
           </tbody>
         </table>
+      </div>
+      {/* simple pagination controls (will request server for page) */}
+      <div className="flex items-center justify-between mt-3">
+        <div />
+        <div className="flex items-center gap-2">
+          <button onClick={() => refresh(1)} className="px-2 py-1 bg-gray-100 rounded">First</button>
+          <button onClick={() => refresh(2)} className="px-2 py-1 bg-gray-100 rounded">Next</button>
+        </div>
       </div>
     </div>
   )

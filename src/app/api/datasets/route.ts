@@ -21,18 +21,22 @@ export async function POST(req: Request) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    const filename = `${projectId}/${Date.now()}_${file.name}`
-
-    // upload to Supabase Storage (server-side using service role key)
-    await supabaseAdmin.storage.from(process.env.SUPABASE_BUCKET_NAME ?? 'datasets').upload(filename, buffer, {
-      contentType: file.type || 'application/octet-stream',
-    })
-
-    const publicUrl = getPublicUrl(filename)
-
     // verify project ownership
     const project = await prisma.project.findUnique({ where: { id: projectId } })
     if (!project || project.userId !== user.id) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 })
+
+    // Server-side upload if client didn't upload directly
+    let publicUrl = ''
+    if (form.get('clientUploaded') === '1') {
+      // client already uploaded to Supabase and provided fileUrl
+      publicUrl = (form.get('fileUrl') as string) || ''
+    } else {
+      const filename = `${projectId}/${Date.now()}_${file.name}`
+      await supabaseAdmin.storage.from(process.env.SUPABASE_BUCKET_NAME ?? 'datasets').upload(filename, buffer, {
+        contentType: file.type || 'application/octet-stream',
+      })
+      publicUrl = getPublicUrl(filename)
+    }
 
     const dataset = await prisma.dataset.create({ data: { projectId, name, fileUrl: publicUrl } })
     await logActivity(user.id, 'dataset.upload', { projectId, datasetId: dataset.id })

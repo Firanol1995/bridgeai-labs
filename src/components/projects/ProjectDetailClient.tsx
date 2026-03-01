@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react'
+import supabase from '@/lib/supabaseClient'
 
 export default function ProjectDetailClient({ project, initialDatasets = [] }: any) {
   const [datasets, setDatasets] = useState(initialDatasets)
@@ -10,17 +11,30 @@ export default function ProjectDetailClient({ project, initialDatasets = [] }: a
     if (!file) return
     setUploading(true)
     try {
+      // upload directly from browser using anon key
+      const path = `${project.id}/${Date.now()}_${file.name}`
+      const { data, error } = await supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME ?? 'datasets').upload(path, file, { cacheControl: '3600', upsert: false })
+      if (error) {
+        console.error('supabase upload error', error)
+        alert('Upload failed')
+        setUploading(false)
+        return
+      }
+      const fileUrl = supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME ?? 'datasets').getPublicUrl(data.path).publicUrl
+
+      // notify server to create metadata record
       const fd = new FormData()
-      fd.append('file', file)
       fd.append('projectId', project.id)
       fd.append('name', file.name)
+      fd.append('clientUploaded', '1')
+      fd.append('fileUrl', fileUrl)
 
       const res = await fetch('/api/datasets', { method: 'POST', body: fd })
       if (res.ok) {
         const d = await res.json()
         setDatasets(prev => [d, ...prev])
       } else {
-        alert('Upload failed')
+        alert('Failed to register dataset')
       }
     } catch (err) {
       alert('Upload error')

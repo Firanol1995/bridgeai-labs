@@ -11,8 +11,16 @@ export async function GET(req: Request) {
     const user = await getUserFromRequest(req)
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const projects = await prisma.project.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } })
-    return NextResponse.json(projects)
+    const url = new URL(req.url)
+    const page = Math.max(1, Number(url.searchParams.get('page') || '1'))
+    const pageSize = Math.min(100, Math.max(5, Number(url.searchParams.get('pageSize') || '10')))
+
+    const [items, total] = await Promise.all([
+      prisma.project.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
+      prisma.project.count({ where: { userId: user.id } }),
+    ])
+
+    return NextResponse.json({ items, total, page, pageSize })
   } catch (err) {
     logger.error('[GET /api/projects] error', err)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
