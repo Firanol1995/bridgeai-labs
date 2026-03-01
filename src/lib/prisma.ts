@@ -1,1 +1,4 @@
-export { default } from '../server/lib/prisma'
+import prismaDefault from '../server/lib/prisma'
+
+export const prisma = prismaDefault
+export default prismaDefault
