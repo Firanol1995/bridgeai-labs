@@ -18,7 +18,11 @@ export async function GET(req: Request) {
     }
 
     if (type === 'datasets') {
-      const rows = await prisma.dataset.findMany({ include: { project: true } })
+      const url = new URL(req.url)
+      const projectId = url.searchParams.get('projectId')
+      const where = projectId ? { where: { projectId } } : {}
+      // @ts-ignore
+      const rows = await prisma.dataset.findMany({ include: { project: true }, ...(projectId ? { where: { projectId } } : {}) })
       const csv = ['id,name,projectId,fileUrl,createdAt']
       for (const r of rows) csv.push(`${r.id},"${(r.name||'').replace(/"/g,'""')}",${r.projectId},${r.fileUrl},${r.createdAt.toISOString()}`)
       return new NextResponse(csv.join('\n'), { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="datasets.csv"' } })

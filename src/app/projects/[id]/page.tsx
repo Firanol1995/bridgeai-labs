@@ -1,3 +1,28 @@
+import ProjectDetailClient from '@/components/projects/ProjectDetailClient'
+
+export default async function ProjectPage({ params }: { params: { id: string } }) {
+  const { id } = params
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+
+  const [projectRes, datasetsRes] = await Promise.all([
+    fetch(`${base}/api/projects?id=${id}`, { cache: 'no-store' }),
+    fetch(`${base}/api/datasets?projectId=${id}`, { cache: 'no-store' }),
+  ])
+
+  const project = projectRes.ok ? await projectRes.json() : null
+  const datasets = datasetsRes.ok ? await datasetsRes.json() : []
+
+  if (!project) return <div className="p-6">Project not found.</div>
+
+  return (
+    <main className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">{project.title}</h1>
+      <p className="text-sm text-gray-600 mb-4">{project.description}</p>
+
+      <ProjectDetailClient project={project} initialDatasets={datasets} />
+    </main>
+  )
+}
 import React from 'react'
 import DatasetUpload from '@/components/DatasetUpload'
 
