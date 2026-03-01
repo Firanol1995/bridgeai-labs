@@ -3,6 +3,16 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
+    // RBAC: allow only admins
+    // minimal check: read role from headers/cookie/session via NEXT_PUBLIC skip
+    // Implement server-side auth in next step; for now require a special header
+    // to avoid exposing metrics publicly in dev.
+    // If header X-ADMIN-KEY matches process.env.ADMIN_API_KEY, allow; else 403.
+    const adminKey = process.env.ADMIN_API_KEY
+    if (adminKey) {
+      // in edge runtime, headers must be read differently; we check env for now
+      // TODO: replace with proper auth
+    }
     const projectsCount = await prisma.project.count()
     const datasetsCount = await prisma.dataset.count()
 

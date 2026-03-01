@@ -5,22 +5,40 @@ export default function ActivityFeedClient({ initialActivities = [] }: any) {
   const [activities, setActivities] = useState(initialActivities)
 
   useEffect(() => {
-    // subscribe to server-sent updates via Supabase Realtime if available
-    // fall back to polling
     let mounted = true
-    const poll = async () => {
+    let subscription: any = null
+
+    const init = async () => {
       try {
-        const res = await fetch('/api/dashboard/activity?limit=25')
-        if (!res.ok) return
-        const json = await res.json()
-        if (mounted) setActivities(json)
-      } catch (e) {}
+        // try realtime via Supabase (client)
+        const { supabase } = await import('src/lib/supabaseClient')
+        subscription = supabase
+          .channel('public:activity_logs')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_logs' }, payload => {
+            setActivities(prev => [payload.new, ...prev].slice(0, 100))
+          })
+          .subscribe()
+      } catch (e) {
+        // fallback to polling
+        const poll = async () => {
+          try {
+            const res = await fetch('/api/dashboard/activity?limit=25')
+            if (!res.ok) return
+            const json = await res.json()
+            if (mounted) setActivities(json)
+          } catch (err) {}
+        }
+        poll()
+        const id = setInterval(poll, 10_000)
+        return () => clearInterval(id)
+      }
     }
-    poll()
-    const id = setInterval(poll, 10_000)
+
+    init()
+
     return () => {
       mounted = false
-      clearInterval(id)
+      if (subscription && subscription.unsubscribe) subscription.unsubscribe()
     }
   }, [])
 

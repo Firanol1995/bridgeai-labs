@@ -3,6 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(req: Request) {
   try {
+    // require admin header during dev to prevent public listing
+    const url = new URL(req.url)
+    const adminKey = url.searchParams.get('admin_key') || ''
+    if (process.env.ADMIN_API_KEY && process.env.ADMIN_API_KEY !== adminKey) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+    }
     const url = new URL(req.url)
     const limit = Math.min(100, Number(url.searchParams.get('limit') || '25'))
 
