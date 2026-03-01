@@ -11,7 +11,7 @@ export default function ActivityFeedClient({ initialActivities = [] }: any) {
     const init = async () => {
       try {
         // try realtime via Supabase (client)
-        const { supabase } = await import('src/lib/supabaseClient')
+        const { supabase } = await import('@/lib/supabaseClient')
         subscription = supabase
           .channel('public:activity_logs')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_logs' }, payload => {
