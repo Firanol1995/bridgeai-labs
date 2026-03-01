@@ -27,3 +27,8 @@ Quick notes to deploy this Next.js app to Vercel and configure environment varia
 
 - Apply the RLS policies (see `prisma/RLS_APPLY.md`) to enforce row-level access.
 - Configure Sentry (set `SENTRY_DSN`) and confirm events are being captured.
+
+5) Dashboard admin key
+
+- Optionally set `ADMIN_API_KEY` to protect dashboard endpoints during early deployments.
+- Use header `X-ADMIN-KEY: <ADMIN_API_KEY>` or query `?admin_key=<ADMIN_API_KEY>` when calling: `/api/dashboard/activity`, `/api/dashboard/metrics`, `/api/dashboard/export`.

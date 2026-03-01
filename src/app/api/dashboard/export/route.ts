@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAdminRequest } from '@/lib/adminAuth'
 
 export async function GET(req: Request) {
-  try {
+    try {
+      if (process.env.ADMIN_API_KEY && !isAdminRequest(req as any)) {
+        return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+      }
     const url = new URL(req.url)
     const type = url.searchParams.get('type') || 'projects'
 

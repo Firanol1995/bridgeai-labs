@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAdminRequest } from '@/lib/adminAuth'
 
 export async function GET() {
   try {
@@ -35,9 +36,8 @@ export async function GET() {
     return NextResponse.json({ projectsCount, datasetsCount, chartData, storageUsed })
   } catch (e) {
     // RBAC placeholder - in future replace with full server-side auth
-    const adminKey = process.env.ADMIN_API_KEY
-    if (adminKey) {
-      // noop for now
+    if (process.env.ADMIN_API_KEY && !isAdminRequest(req as any)) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 })
     }
 
     // attempt DB reads, but degrade gracefully when DB unreachable
