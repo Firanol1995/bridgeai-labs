@@ -9,6 +9,7 @@ export async function GET(req: Request) {
     const items = await prisma.activity.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
     return NextResponse.json(items)
   } catch (e) {
+    console.error('[api/dashboard/activity] error:', e)
     return NextResponse.json({ error: 'failed to load activity' }, { status: 500 })
   }
 }

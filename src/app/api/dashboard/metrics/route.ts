@@ -23,6 +23,7 @@ export async function GET() {
 
     return NextResponse.json({ projectsCount, datasetsCount, chartData, storageUsed })
   } catch (e) {
+    console.error('[api/dashboard/metrics] error:', e)
     return NextResponse.json({ error: 'failed to load metrics' }, { status: 500 })
   }
 }
