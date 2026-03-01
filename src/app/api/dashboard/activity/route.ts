@@ -11,7 +11,13 @@ export async function GET(req: Request) {
     }
     const limit = Math.min(100, Number(parsedUrl.searchParams.get('limit') || '25'))
 
-    const items = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
+    let items = []
+    try {
+      items = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
+    } catch (dbErr) {
+      console.warn('[api/dashboard/activity] db unreachable, returning empty list:', dbErr?.message || dbErr)
+      items = []
+    }
     return NextResponse.json(items)
   } catch (e) {
     console.error('[api/dashboard/activity] error:', e)
