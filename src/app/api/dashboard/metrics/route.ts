@@ -19,7 +19,8 @@ export async function GET() {
       chartData.push({ date: start.toISOString().slice(0, 10), uploads })
     }
 
-    const storageUsed = await prisma.dataset.aggregate({ _sum: { sizeBytes: true } }).then(r => r._sum.sizeBytes || 0)
+    // storage size not tracked in Prisma schema yet — return 0 as placeholder
+    const storageUsed = 0
 
     return NextResponse.json({ projectsCount, datasetsCount, chartData, storageUsed })
   } catch (e) {

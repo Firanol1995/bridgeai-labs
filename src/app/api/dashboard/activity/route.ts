@@ -6,7 +6,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url)
     const limit = Math.min(100, Number(url.searchParams.get('limit') || '25'))
 
-    const items = await prisma.activity.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
+    const items = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
     return NextResponse.json(items)
   } catch (e) {
     console.error('[api/dashboard/activity] error:', e)
