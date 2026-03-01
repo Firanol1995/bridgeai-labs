@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Update: normalized models for BridgeAI Labs
+
+model User {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  role      String   @default("user")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  projects  Project[]
+  logs      ActivityLog[] @relation("user_logs")
+
+  @@map("users")
+}
+
+model Project {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  title       String
+  description String?
+  status      String    @default("active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user     User    @relation(fields: [userId], references: [id])
+  aiModels AIModel[]
+  datasets Dataset[]
+
+  @@map("projects")
+}
+
+model AIModel {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  type      String
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("ai_models")
+}
+
+model Dataset {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  name      String
+  fileUrl   String   @map("file_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("datasets")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation("user_logs", fields: [userId], references: [id])
+
+  @@map("activity_logs")
+}

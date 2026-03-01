@@ -1,14 +1,23 @@
 {
   "name": "bridgeai-labs",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "echo \"No tests configured. Add a test runner (jest/vitest) and update package.json\" && exit 0",
+    "db:check": "node scripts/check_db.cjs",
+    "db:apply-rls": "powershell -File scripts/apply_rls.ps1"
   },
   "dependencies": {
+    "@prisma/client": "^4.16.2",
+    "@supabase/supabase-js": "^2.35.0",
+    "zod": "^3.22.0",
+    "@sentry/node": "^8.8.0",
+    "@sentry/react": "^7.52.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
@@ -21,7 +30,9 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "prisma": "^4.16.2",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
