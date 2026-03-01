@@ -14,13 +14,15 @@
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",
-    "@supabase/supabase-js": "^2.35.0",
-    "zod": "^3.22.0",
     "@sentry/node": "^8.8.0",
     "@sentry/react": "^7.52.0",
+    "@supabase/supabase-js": "^2.35.0",
+    "@tanstack/react-table": "^8.21.3",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^3.7.0",
+    "zod": "^3.22.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
