@@ -9,7 +9,6 @@ export async function GET(req: Request) {
     if (process.env.ADMIN_API_KEY && process.env.ADMIN_API_KEY !== adminKey) {
       return NextResponse.json({ error: 'forbidden' }, { status: 403 })
     }
-    const url = new URL(req.url)
     const limit = Math.min(100, Number(url.searchParams.get('limit') || '25'))
 
     const items = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
