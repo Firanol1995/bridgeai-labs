@@ -4,11 +4,15 @@ import { prisma } from '@/lib/prisma'
 export async function GET(req: Request) {
   try {
     // require admin header during dev to prevent public listing
-    const parsedUrl = new URL(req.url)
-    const adminKey = parsedUrl.searchParams.get('admin_key') || ''
-    if (process.env.ADMIN_API_KEY && process.env.ADMIN_API_KEY !== adminKey) {
-      return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+    // require admin session
+    const user = await getUserFromRequest(req as any)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    try {
+      requireRole(user.role, 'admin')
+    } catch (err) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+    const parsedUrl = new URL(req.url)
     const limit = Math.min(100, Number(parsedUrl.searchParams.get('limit') || '25'))
 
     let items = []

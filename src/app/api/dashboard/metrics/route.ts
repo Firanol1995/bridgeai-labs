@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { isAdminRequest } from '@/lib/adminAuth'
+import { getUserFromRequest } from '@/lib/auth'
+import { requireRole } from '@/lib/rbac'
 
 export async function GET(req: Request) {
   try {
-    // enforce admin key if configured
-    if (process.env.ADMIN_API_KEY && !isAdminRequest(req as any)) {
-      return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+    // enforce admin session role
+    const user = await getUserFromRequest(req as any)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    try {
+      requireRole(user.role, 'admin')
+    } catch (e) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     let projectsCount = 0

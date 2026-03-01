@@ -4,8 +4,13 @@ import { isAdminRequest } from '@/lib/adminAuth'
 
 export async function GET(req: Request) {
     try {
-      if (process.env.ADMIN_API_KEY && !isAdminRequest(req as any)) {
-        return NextResponse.json({ error: 'forbidden' }, { status: 403 })
+      // require admin session
+      const user = await getUserFromRequest(req as any)
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      try {
+        requireRole(user.role, 'admin')
+      } catch (err) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     const url = new URL(req.url)
     const type = url.searchParams.get('type') || 'projects'
