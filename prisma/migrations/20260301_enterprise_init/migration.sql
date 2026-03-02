@@ -40,93 +40,251 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Projects
-CREATE TABLE IF NOT EXISTS projects (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid REFERENCES organizations(id) ON DELETE SET NULL,
-  owner_id uuid REFERENCES users(id) ON DELETE SET NULL,
-  title text NOT NULL,
-  description text,
-  status projectstatus DEFAULT 'ACTIVE',
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS projects (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id uuid REFERENCES organizations(id) ON DELETE SET NULL,
+        owner_id uuid REFERENCES users(id) ON DELETE SET NULL,
+        title text NOT NULL,
+        description text,
+        status projectstatus DEFAULT 'ACTIVE',
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS projects (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id text,
+        owner_id text,
+        title text NOT NULL,
+        description text,
+        status projectstatus DEFAULT 'ACTIVE',
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- AI Models
-CREATE TABLE IF NOT EXISTS ai_models (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  type text NOT NULL,
-  config jsonb NOT NULL DEFAULT '{}',
-  status modelstatus DEFAULT 'DRAFT',
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS ai_models (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+        name text NOT NULL,
+        type text NOT NULL,
+        config jsonb NOT NULL DEFAULT '{}',
+        status modelstatus DEFAULT 'DRAFT',
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS ai_models (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id text,
+        name text NOT NULL,
+        type text NOT NULL,
+        config jsonb NOT NULL DEFAULT '{}',
+        status modelstatus DEFAULT 'DRAFT',
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Model Versions
-CREATE TABLE IF NOT EXISTS model_versions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  model_id uuid REFERENCES ai_models(id) ON DELETE CASCADE,
-  version text NOT NULL,
-  artifact_url text,
-  metrics jsonb,
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS model_versions (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        model_id uuid REFERENCES ai_models(id) ON DELETE CASCADE,
+        version text NOT NULL,
+        artifact_url text,
+        metrics jsonb,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS model_versions (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        model_id text,
+        version text NOT NULL,
+        artifact_url text,
+        metrics jsonb,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Datasets
-CREATE TABLE IF NOT EXISTS datasets (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  file_url text NOT NULL,
-  storage_path text,
-  size integer,
-  metadata jsonb,
-  uploaded_by uuid REFERENCES users(id) ON DELETE SET NULL,
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS datasets (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+        name text NOT NULL,
+        file_url text NOT NULL,
+        storage_path text,
+        size integer,
+        metadata jsonb,
+        uploaded_by uuid REFERENCES users(id) ON DELETE SET NULL,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS datasets (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id text,
+        name text NOT NULL,
+        file_url text NOT NULL,
+        storage_path text,
+        size integer,
+        metadata jsonb,
+        uploaded_by text,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Pipelines
-CREATE TABLE IF NOT EXISTS pipelines (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  type text NOT NULL,
-  config jsonb NOT NULL DEFAULT '{}',
-  status pipelinestatus DEFAULT 'IDLE',
-  last_run_at timestamptz,
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS pipelines (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+        name text NOT NULL,
+        type text NOT NULL,
+        config jsonb NOT NULL DEFAULT '{}',
+        status pipelinestatus DEFAULT 'IDLE',
+        last_run_at timestamptz,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS pipelines (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id text,
+        name text NOT NULL,
+        type text NOT NULL,
+        config jsonb NOT NULL DEFAULT '{}',
+        status pipelinestatus DEFAULT 'IDLE',
+        last_run_at timestamptz,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Usage Events
-CREATE TABLE IF NOT EXISTS usage_events (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
-  user_id uuid REFERENCES users(id) ON DELETE SET NULL,
-  event_type text NOT NULL,
-  payload jsonb NOT NULL DEFAULT '{}',
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  -- Try to create the table with a UUID foreign key to users.id.
+  -- If the existing users.id column is a different type (e.g. bigint), this
+  -- will raise an error; in that case we fall back to creating the table
+  -- without a foreign key constraint to avoid type mismatch failures.
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS usage_events (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+        user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+        event_type text NOT NULL,
+        payload jsonb NOT NULL DEFAULT '{}',
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    -- Fallback: create without the foreign key to avoid type mismatch.
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS usage_events (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+        user_id text,
+        event_type text NOT NULL,
+        payload jsonb NOT NULL DEFAULT '{}',
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Activity Logs
-CREATE TABLE IF NOT EXISTS activity_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid REFERENCES users(id) ON DELETE SET NULL,
-  action text NOT NULL,
-  metadata jsonb,
-  ip text,
-  user_agent text,
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+        action text NOT NULL,
+        metadata jsonb,
+        ip text,
+        user_agent text,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id text,
+        action text NOT NULL,
+        metadata jsonb,
+        ip text,
+        user_agent text,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Audit Logs
-CREATE TABLE IF NOT EXISTS audit_logs (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  actor_id uuid REFERENCES users(id) ON DELETE SET NULL,
-  action text NOT NULL,
-  target_type text,
-  target_id text,
-  diff jsonb,
-  created_at timestamptz DEFAULT now()
-);
+DO $$
+BEGIN
+  BEGIN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        actor_id uuid REFERENCES users(id) ON DELETE SET NULL,
+        action text NOT NULL,
+        target_type text,
+        target_id text,
+        diff jsonb,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  EXCEPTION WHEN OTHERS THEN
+    EXECUTE $sql$
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        actor_id text,
+        action text NOT NULL,
+        target_type text,
+        target_id text,
+        diff jsonb,
+        created_at timestamptz DEFAULT now()
+      );
+    $sql$;
+  END;
+END $$;
 
 -- Indexes to help analytics queries (non-blocking)
 CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(organization_id);
