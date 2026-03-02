@@ -1,96 +1,4 @@
 "use client"
-import React, { useEffect, useState } from 'react'
-
-export default function ProjectsClient({ initialProjects = [] }: any) {
-  const [projects, setProjects] = useState(initialProjects)
-  const [loading, setLoading] = useState(false)
-  const [query, setQuery] = useState('')
-
-  useEffect(() => {
-    setProjects(initialProjects)
-  }, [initialProjects])
-
-  const refresh = async (page = 1) => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/projects?page=${page}&pageSize=10`)
-      if (res.ok) {
-        const json = await res.json()
-        setProjects(json.items || [])
-      }
-    } catch (e) {}
-    setLoading(false)
-  }
-
-  const createProject = async () => {
-    const title = prompt('Project title')
-    if (!title) return
-    const description = prompt('Description (optional)') || ''
-    setLoading(true)
-    try {
-      const res = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, description }) })
-      if (res.ok) {
-        await refresh()
-      } else {
-        alert('Failed to create project')
-      }
-    } catch (e) {
-      alert('Failed to create project')
-    }
-    setLoading(false)
-  }
-
-  const filtered = projects.filter((p: any) => p.title.toLowerCase().includes(query.toLowerCase()))
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search projects" className="border px-2 py-1 rounded" />
-          <button onClick={refresh} className="px-3 py-1 bg-gray-200 rounded">Refresh</button>
-        </div>
-        <div>
-          <button onClick={createProject} className="px-3 py-1 bg-blue-600 text-white rounded">New Project</button>
-        </div>
-      </div>
-
-      <div className="bg-white rounded shadow">
-        <table className="min-w-full">
-          <thead>
-            <tr>
-              <th className="text-left px-3 py-2">Name</th>
-              <th className="text-left px-3 py-2">Created</th>
-              <th className="text-left px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((p: any) => (
-              <tr key={p.id} className="border-t">
-                <td className="px-3 py-2"><a className="text-blue-600" href={`/projects/${p.id}`}>{p.title}</a></td>
-                <td className="px-3 py-2">{new Date(p.createdAt).toLocaleString()}</td>
-                <td className="px-3 py-2"> <a className="text-sm text-gray-600" href={`/projects/${p.id}`}>Open</a> </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-3 py-4 text-sm text-gray-500">No projects</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      {/* simple pagination controls (will request server for page) */}
-      <div className="flex items-center justify-between mt-3">
-        <div />
-        <div className="flex items-center gap-2">
-          <button onClick={() => refresh(1)} className="px-2 py-1 bg-gray-100 rounded">First</button>
-          <button onClick={() => refresh(2)} className="px-2 py-1 bg-gray-100 rounded">Next</button>
-        </div>
-      </div>
-    </div>
-  )
-}
-"use client"
 
 import React, { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
@@ -102,8 +10,9 @@ type Project = {
   description?: string | null
 }
 
-export default function ProjectsClient({ initialProjects }: { initialProjects?: Project[] }) {
-  const [projects, setProjects] = useState<Project[]>(initialProjects ?? [])
+export default function ProjectsClient({ initialProjects }: { initialProjects?: any }) {
+  const init = Array.isArray(initialProjects) ? initialProjects : (initialProjects?.items ?? [])
+  const [projects, setProjects] = useState<Project[]>(init)
   const [loading, setLoading] = useState(true)
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
@@ -125,7 +34,7 @@ export default function ProjectsClient({ initialProjects }: { initialProjects?: 
         const res = await fetch('/api/projects', { headers: { Authorization: `Bearer ${token}` } })
         if (res.ok) {
           const json = await res.json()
-          if (mounted) setProjects(json)
+          if (mounted) setProjects(Array.isArray(json) ? json : (json?.items ?? []))
         }
       } catch (e) {
         // ignore
@@ -216,3 +125,4 @@ export default function ProjectsClient({ initialProjects }: { initialProjects?: 
     </section>
   )
 }
+

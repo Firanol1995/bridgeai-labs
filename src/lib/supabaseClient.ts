@@ -11,5 +11,3 @@ if (!url || !anonKey) {
 export const supabase = createClient(url, anonKey)
 
 export default supabase
-export * from '../../frontend/lib/supabaseClient'
-export { supabase } from '../../frontend/lib/supabaseClient'

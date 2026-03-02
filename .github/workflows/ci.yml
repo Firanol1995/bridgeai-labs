@@ -1,0 +1,57 @@
+name: CI
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Lint
+        run: npm run lint --if-present
+      - name: Build Next
+        run: npm run build
+
+  integration:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build and run worker compose
+        run: |
+          docker compose -f docker-compose.worker.yml up --build -d
+      - name: Wait for worker health
+        run: |
+          set -e
+          echo "Waiting for /tmp/worker.started inside worker container..."
+          if ! timeout=60; i=0; while [ $i -lt $timeout ]; do
+            if docker compose -f docker-compose.worker.yml exec -T worker sh -c 'test -f /tmp/worker.started' 2>/dev/null; then
+              echo "Worker healthy"
+              break
+            fi
+            i=$((i+1))
+            sleep 1
+          done
+          if [ $i -ge $timeout ]; then
+            echo "Worker did not become healthy in time" >&2
+            docker compose -f docker-compose.worker.yml logs --tail=200
+            docker compose -f docker-compose.worker.yml down --volumes --remove-orphans
+            exit 1
+          fi
+      - name: Capture worker logs
+        run: docker compose -f docker-compose.worker.yml logs --tail=200
+      - name: Tear down compose
+        run: docker compose -f docker-compose.worker.yml down --volumes --remove-orphans

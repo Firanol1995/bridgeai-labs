@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:worker": "tsc --outDir dist --skipLibCheck",
+    "worker:run": "node dist/backend/workers/embeddingProcessor.js",
+    "worker:docker:up": "docker-compose -f docker-compose.worker.yml up --build -d",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest",
     "test": "echo \"No tests configured. Add a test runner (jest/vitest) and update package.json\" && exit 0",
     "db:check": "node scripts/check_db.cjs",
-    "db:apply-rls": "powershell -File scripts/apply_rls.ps1"
+    "db:apply-rls": "powershell -File scripts/apply_rls.ps1",
+    "db:seed": "node prisma/seed.mjs"
   },
   "dependencies": {
     "@prisma/client": "^4.16.2",
@@ -18,7 +23,10 @@
     "@sentry/react": "^7.52.0",
     "@supabase/supabase-js": "^2.98.0",
     "@tanstack/react-table": "^8.21.3",
+    "bullmq": "^5.70.1",
+    "ioredis": "^5.10.0",
     "next": "16.1.6",
+    "node-fetch": "^3.3.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.7.0",
@@ -26,7 +34,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.35",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
@@ -35,6 +43,9 @@
     "prisma": "^4.16.2",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5.9.3",
+    "pg": "^8.11.0",
+    "vitest": "^1.3.0",
+    "@types/node": "^20.19.35"
   }
 }

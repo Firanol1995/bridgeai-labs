@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getUserFromRequest } from '@/lib/auth'
+import { requireRole } from '@/lib/rbac'
 
 export async function GET(req: Request) {
   try {

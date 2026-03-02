@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
 import { z } from 'zod'
+import { requireAuth, requireRole as requireRoleCheck } from '@/lib/authMiddleware'
 import { getUserFromRequest } from '@/lib/auth'
-import { requireRole } from '@/lib/rbac'
 import logger from '@/lib/logger'
 
 export async function GET(req: Request) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const authRes = await requireAuth(req as any)
+    if ((authRes as any)?.status) return authRes
+    const user = authRes as any
 
     const url = new URL(req.url)
     const page = Math.max(1, Number(url.searchParams.get('page') || '1'))
@@ -31,11 +32,11 @@ const CreateProjectSchema = z.object({ title: z.string().min(1), description: z.
 
 export async function POST(req: Request) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    // Basic RBAC: allow only users and above (admins may create on behalf later)
-    requireRole(user.role, ['user', 'org_owner', 'admin'])
+    const authRes = await requireAuth(req as any)
+    if ((authRes as any)?.status) return authRes
+    const user = authRes as any
+    // Basic RBAC: allow only users and above
+    if (!requireRoleCheck(user, ['user', 'org_owner', 'admin'])) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()
     const parsed = CreateProjectSchema.safeParse(body)
@@ -57,8 +58,9 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const authRes = await requireAuth(req as any)
+    if ((authRes as any)?.status) return authRes
+    const user = authRes as any
 
     const url = new URL(req.url)
     const id = url.searchParams.get('id')

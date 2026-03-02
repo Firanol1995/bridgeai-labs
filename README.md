@@ -78,6 +78,46 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+Worker & background processing
+-----------------------------
+
+This repository includes a background worker that processes embeddings and upserts them into your vector store. To run it locally or in a containerized environment:
+
+- Build the worker (compiles TypeScript into `dist/`):
+
+```bash
+npm run build:worker
+```
+
+- Run the compiled worker (expects `REDIS_URL` to be set if using queue mode):
+
+```bash
+npm run worker:run
+```
+
+- Bring up Redis + worker via Docker Compose (recommended for local integration testing):
+
+```bash
+docker-compose -f docker-compose.worker.yml up --build -d
+# to stop
+docker-compose -f docker-compose.worker.yml down
+```
+
+Environment variables of note (server-side only):
+- `REDIS_URL` — Redis connection for BullMQ
+- `OPENAI_API_KEY` — for producing real embeddings
+- `SUPABASE_KEY` — server/service role key for Supabase admin operations
+- `DATABASE_URL` — Postgres DB used by Prisma (for migrations)
+- `SENTRY_DSN` — optional for error tracking
+
+If you just want to test embedding generation without Redis or external services, there's a standalone runner:
+
+```bash
+node backend/workers/runProcessorStandalone.js "Test text"
+# output written to backend/workers/runProcessorStandalone.output.json
+```
+
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More

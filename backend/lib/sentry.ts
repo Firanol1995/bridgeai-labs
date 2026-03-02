@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/node'
+
 const dsn = process.env.SENTRY_DSN
 
 let serverInitialized = false
@@ -27,4 +29,4 @@ export async function initSentryBrowser() {
   }
 }
 
-export default { initSentryServer, initSentryBrowser }
+export { Sentry }

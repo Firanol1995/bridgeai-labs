@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "composite": false,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "allowJs": false
+  },
+  "include": [
+    "backend/**/*.ts"
+  ]
+}

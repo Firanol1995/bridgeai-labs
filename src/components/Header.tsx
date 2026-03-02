@@ -46,19 +46,34 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white shadow-md py-4 px-8 flex justify-between items-center">
-      <h1 className="text-2xl font-bold text-blue-600">BridgeAI Labs</h1>
-      <nav className="space-x-6">
-        <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
-        <Link href="/dashboard" className="text-gray-700 hover:text-blue-600">Dashboard</Link>
-        <Link href="/projects" className="text-gray-700 hover:text-blue-600">Projects</Link>
-        <Link href="/about" className="text-gray-700 hover:text-blue-600">About</Link>
-        {userEmail ? (
-          <button onClick={handleSignOut} className="text-gray-700 hover:text-blue-600">Sign out</button>
-        ) : (
-          <Link href="/login" className="text-gray-700 hover:text-blue-600">Log in</Link>
-        )}
-      </nav>
+    <header className="bg-white shadow-md py-4 px-6 md:px-10 flex justify-between items-center">
+      <div className="flex items-center gap-4">
+        <h1 className="text-2xl font-bold text-blue-600">BridgeAI Labs</h1>
+        <nav className="hidden md:flex items-center gap-4 text-sm text-gray-700">
+          <Link href="/" className="hover:text-blue-600">Home</Link>
+          <Link href="/copilot" className="hover:text-blue-600">Copilot</Link>
+          <Link href="/projects" className="hover:text-blue-600">Projects</Link>
+          <Link href="/dashboard" className="hover:text-blue-600">Dashboard</Link>
+          <Link href="/services" className="hover:text-blue-600">Services</Link>
+          <Link href="/mlops" className="hover:text-blue-600">MLOps</Link>
+        </nav>
+      </div>
+
+        <div className="flex items-center gap-4">
+          <Link href="/about" className="hidden sm:inline text-sm text-gray-600 hover:text-blue-600">About</Link>
+          <Link href="/enterprise" className="hidden sm:inline text-sm text-gray-600 hover:text-blue-600">Enterprise</Link>
+          {userEmail ? (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-700">{userEmail}</span>
+              <button onClick={handleSignOut} className="px-3 py-1 text-sm bg-red-50 text-red-600 rounded border">Sign out</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link href="/signup" className="px-3 py-1 text-sm text-blue-600 border rounded">Sign up</Link>
+              <Link href="/contact" className="px-3 py-1 bg-blue-600 text-white rounded">Contact Sales</Link>
+            </div>
+          )}
+        </div>
     </header>
   )
 }

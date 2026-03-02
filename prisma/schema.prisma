@@ -7,68 +7,200 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Update: normalized models for BridgeAI Labs
+// BridgeAI Labs enterprise-ready schema
+
+enum Role {
+  ADMIN
+  ENGINEER
+  CLIENT
+  USER
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+  PAUSED
+}
+
+enum ModelStatus {
+  DRAFT
+  TRAINING
+  DEPLOYED
+  RETIRED
+}
+
+enum PipelineStatus {
+  IDLE
+  RUNNING
+  FAILED
+  SUCCEEDED
+}
+
+model Organization {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  users    User[]
+  projects Project[]
+
+  @@map("organizations")
+}
 
 model User {
-  id        String   @id @default(uuid())
-  name      String?
-  email     String   @unique
-  role      String   @default("user")
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String    @id @default(uuid())
+  organizationId String?   @map("organization_id")
+  name           String?
+  email          String    @unique
+  role           Role      @default(USER)
+  createdAt      DateTime  @default(now()) @map("created_at")
 
-  projects  Project[]
-  logs      ActivityLog[] @relation("user_logs")
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  projects     Project[]
+  logs         ActivityLog[]  @relation("user_logs")
+  auditEntries AuditLog[]     @relation("actor_audit")
 
   @@map("users")
 }
 
 model Project {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  title       String
-  description String?
-  status      String    @default("active")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id           String         @id @default(uuid())
+  organizationId String?      @map("organization_id")
+  ownerId      String         @map("owner_id")
+  title        String
+  description  String?
+  status       ProjectStatus  @default(ACTIVE)
+  createdAt    DateTime       @default(now()) @map("created_at")
 
-  user     User    @relation(fields: [userId], references: [id])
-  aiModels AIModel[]
-  datasets Dataset[]
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  owner        User           @relation(fields: [ownerId], references: [id])
+  aiModels     AIModel[]
+  datasets     Dataset[]
+  pipelines    Pipeline[]
+  usageEvents  UsageEvent[]
 
   @@map("projects")
 }
 
 model AIModel {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  type      String
-  config    Json
-  createdAt DateTime @default(now()) @map("created_at")
+  id         String      @id @default(uuid())
+  projectId  String      @map("project_id")
+  name       String
+  type       String
+  config     Json
+  status     ModelStatus @default(DRAFT)
+  createdAt  DateTime    @default(now()) @map("created_at")
 
-  project Project @relation(fields: [projectId], references: [id])
+  project    Project     @relation(fields: [projectId], references: [id])
+  versions   ModelVersion[]
 
   @@map("ai_models")
 }
 
+model ModelVersion {
+  id         String   @id @default(uuid())
+  modelId    String   @map("model_id")
+  version    String
+  artifactUrl String  @map("artifact_url")
+  metrics    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  model AIModel @relation(fields: [modelId], references: [id])
+
+  @@map("model_versions")
+}
+
 model Dataset {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  name      String
-  fileUrl   String   @map("file_url")
-  createdAt DateTime @default(now()) @map("created_at")
+  id         String   @id @default(uuid())
+  projectId  String   @map("project_id")
+  name       String
+  fileUrl    String   @map("file_url")
+  storagePath String? @map("storage_path")
+  size       Int?
+  metadata   Json?
+  uploadedBy String?  @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
 
   project Project @relation(fields: [projectId], references: [id])
 
   @@map("datasets")
 }
 
-model ActivityLog {
+model Pipeline {
+  id        String         @id @default(uuid())
+  projectId String         @map("project_id")
+  name      String
+  type      String
+  config    Json
+  status    PipelineStatus @default(IDLE)
+  lastRunAt DateTime?
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("pipelines")
+}
+
+model UsageEvent {
   id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  action    String
-  metadata  Json?
+  projectId String   @map("project_id")
+  userId    String?  @map("user_id")
+  eventType String
+  payload   Json
   createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("usage_events")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now()) @map("created_at")
 
   user User @relation("user_logs", fields: [userId], references: [id])
 
   @@map("activity_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?  @map("actor_id")
+  action     String
+  targetType String?  @map("target_type")
+  targetId   String?  @map("target_id")
+  diff       Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("actor_audit", fields: [actorId], references: [id])
+
+  @@map("audit_logs")
+}
+
+model ContactRequest {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String
+  company   String?
+  message   String
+  status    String   @default("new")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_requests")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String
+  userId    String?  @map("user_id")
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("analytics_events")
 }

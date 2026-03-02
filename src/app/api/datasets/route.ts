@@ -4,12 +4,14 @@ import prisma from '@/lib/prisma'
 import { logActivity } from '@/lib/activity'
 import { getPublicUrl } from '@/lib/storage'
 import { getUserFromRequest } from '@/lib/auth'
+import { requireAuth } from '@/lib/authMiddleware'
 import logger from '@/lib/logger'
 
 export async function POST(req: Request) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const authRes = await requireAuth(req as any)
+    if ((authRes as any)?.status) return authRes
+    const user = authRes as any
 
     const form = await req.formData()
     const file = form.get('file') as File | null
@@ -50,8 +52,9 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const authRes = await requireAuth(req as any)
+    if ((authRes as any)?.status) return authRes
+    const user = authRes as any
 
     const url = new URL(req.url)
     const projectId = url.searchParams.get('projectId')

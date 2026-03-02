@@ -1,9 +1,14 @@
-export type Role = 'admin' | 'org_owner' | 'user'
+export type Role = 'admin' | 'org_owner' | 'user' | 'engineer' | 'client'
+
+function normalize(r?: string) {
+  return (r || '').toString().toLowerCase()
+}
 
 export function hasRole(userRole: string | undefined, required: Role | Role[]) {
   if (!userRole) return false
   const arr = Array.isArray(required) ? required : [required]
-  return arr.includes(userRole as Role)
+  const norm = normalize(userRole)
+  return arr.map((a) => a.toString().toLowerCase()).includes(norm)
 }
 
 export function requireRole(userRole: string | undefined, required: Role | Role[]) {
