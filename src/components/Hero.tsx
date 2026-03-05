@@ -30,12 +30,12 @@ export default function Hero({ metrics }: { metrics?: any }) {
     <section className="bg-gradient-to-r from-white to-gray-50 rounded-lg p-8 shadow-md">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex-1">
-          <h1 className="text-3xl md:text-4xl font-extrabold">BridgeAI Labs — Production AI Copilots & Data Platform</h1>
-          <p className="mt-3 text-gray-700 max-w-2xl">Platform + services to convert enterprise knowledge and systems into operational AI: custom copilots powered by secure RAG pipelines, resilient data engineering that guarantees trusted inputs, and MLOps for observable, safe model delivery. We help teams automate decisions, unlock insights, and measure ROI.</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">BridgeAI Labs — Production AI Copilots</h1>
+          <p className="mt-3 text-gray-700 max-w-2xl">Platform + services to convert enterprise knowledge and systems into operational AI. Custom copilots, secure RAG ingestion, and MLOps for reliable model delivery and measurable ROI.</p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <ViewAndTrack href="/services" eventType="click_view_focus_areas" className="px-4 py-2 bg-blue-600 text-white rounded">View focus areas</ViewAndTrack>
-            <ViewAndTrack href="/copilot" eventType="click_try_copilot" className="px-4 py-2 bg-blue-600 text-white rounded">Try Copilot</ViewAndTrack>
-            <ViewAndTrack href="/contact" eventType="click_request_demo" className="px-4 py-2 bg-blue-600 text-white rounded">Request a demo</ViewAndTrack>
+            <ViewAndTrack href="/services" eventType="click_view_focus_areas" ariaLabel="View our focus areas" className="px-4 py-2 bg-white text-gray-800 border rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">View focus areas</ViewAndTrack>
+            <ViewAndTrack href="/copilot" eventType="click_try_copilot" ariaLabel="Try a demo of the Copilot" className="px-4 py-2 bg-white text-gray-800 border rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Try Copilot</ViewAndTrack>
+            <ViewAndTrack href="/contact" eventType="click_request_demo" ariaLabel="Request a demo from sales" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Request a demo</ViewAndTrack>
           </div>
         </div>
 
@@ -70,6 +70,7 @@ function ViewAndTrack({ href, eventType, children, className }: { href: string; 
     router.push(href)
   }
   return (
-    <button onClick={handle} className={`${className ?? ''} cursor-pointer`}>{children}</button>
+    <button type="button" aria-label={ariaLabel ?? String(children)} onClick={handle} className={`${className ?? ''} cursor-pointer`}>{children}</button>
   )
 }
+
