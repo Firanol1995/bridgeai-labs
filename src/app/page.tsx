@@ -3,7 +3,8 @@ import Link from 'next/link'
 import HomeQuickActions from '@/components/HomeQuickActions'
 import Hero from '@/components/Hero'
 import FocusModal from '@/components/FocusModal'
-import Testimonials from '@/components/Testimonials'
+import dynamic from 'next/dynamic'
+const Testimonials = dynamic(() => import('@/components/Testimonials'), { ssr: false, loading: () => <div className="p-6 bg-white rounded shadow">Loading testimonials…</div> })
 import ContactModal from '@/components/ContactModal'
 import AccessibleAccordion from '@/components/AccessibleAccordion'
 
