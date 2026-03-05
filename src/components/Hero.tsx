@@ -58,7 +58,7 @@ export default function Hero({ metrics }: { metrics?: any }) {
   )
 }
 
-function ViewAndTrack({ href, eventType, children, className }: { href: string; eventType: string; children: React.ReactNode; className?: string }) {
+function ViewAndTrack({ href, eventType, children, className, ariaLabel }: { href: string; eventType: string; children: React.ReactNode; className?: string; ariaLabel?: string }) {
   const router = useRouter()
   async function handle(e: React.MouseEvent) {
     e.preventDefault()
