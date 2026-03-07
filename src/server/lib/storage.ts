@@ -17,4 +17,3 @@ export function getPublicUrl(path: string) {
   return data.publicUrl
 }
 export * from '../../../backend/lib/storage'
-export { default } from '../../../backend/lib/storage'

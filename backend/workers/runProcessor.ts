@@ -1,4 +1,4 @@
-import { processRecord } from './embeddingProcessor.ts'
+import { processRecord } from './embeddingProcessor'
 
 async function main() {
   const recordId = process.env.TEST_RECORD_ID || `local-test-${Date.now()}`

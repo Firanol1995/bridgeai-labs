@@ -9,12 +9,19 @@ import logger from '@/lib/logger'
 export async function GET(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
 
     const url = new URL(req.url)
+    const id = url.searchParams.get('id')
     const page = Math.max(1, Number(url.searchParams.get('page') || '1'))
     const pageSize = Math.min(100, Math.max(5, Number(url.searchParams.get('pageSize') || '10')))
+
+    if (id) {
+      const item = await prisma.project.findFirst({ where: { id, userId: user.id } })
+      if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+      return NextResponse.json(item)
+    }
 
     const [items, total] = await Promise.all([
       prisma.project.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
@@ -33,8 +40,8 @@ const CreateProjectSchema = z.object({ title: z.string().min(1), description: z.
 export async function POST(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
     // Basic RBAC: allow only users and above
     if (!requireRoleCheck(user, ['user', 'org_owner', 'admin'])) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -59,8 +66,8 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
 
     const url = new URL(req.url)
     const id = url.searchParams.get('id')

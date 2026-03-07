@@ -1,6 +1,9 @@
 import React from 'react'
+import { requirePageAuth } from '@/lib/requirePageAuth'
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  await requirePageAuth('/settings')
+
   return (
     <section className="p-8">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>

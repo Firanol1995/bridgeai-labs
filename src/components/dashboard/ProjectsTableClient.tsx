@@ -1,35 +1,28 @@
 "use client"
-import React from 'react'
-import { useState, useMemo } from 'react'
-import { useTable, ColumnDef } from '@tanstack/react-table'
+import React, { useEffect, useState } from 'react'
 
-type ProjectRow = { id: string; name: string; ownerEmail?: string; createdAt: string }
+type ProjectRow = { id: string; title?: string; name?: string; ownerEmail?: string; createdAt: string }
 
 export default function ProjectsTableClient() {
   const [data, setData] = useState<ProjectRow[]>([])
 
-  useMemo(() => {
+  useEffect(() => {
+    let mounted = true
     ;(async () => {
       try {
         const res = await fetch('/api/projects')
-        if (res.ok) setData(await res.json())
+        if (!mounted || !res.ok) return
+        const json = await res.json()
+        setData(Array.isArray(json) ? json : (json?.items ?? []))
       } catch (e) {
         // ignore
       }
     })()
+    return () => {
+      mounted = false
+    }
   }, [])
 
-  const columns = useMemo<ColumnDef<ProjectRow, any>[]>(
-    () => [
-      { accessorKey: 'name', header: 'Name' },
-      { accessorKey: 'ownerEmail', header: 'Owner' },
-      { accessorKey: 'createdAt', header: 'Created' },
-    ],
-    []
-  )
-
-  // a lightweight table render using TanStack's headless table
-  // keep minimal to avoid heavy coupling
   return (
     <div className="bg-white rounded shadow p-2 overflow-auto">
       <table className="min-w-full text-left">
@@ -43,7 +36,7 @@ export default function ProjectsTableClient() {
         <tbody>
           {data.map((r) => (
             <tr key={r.id} className="border-t">
-              <td className="px-3 py-2">{r.name}</td>
+              <td className="px-3 py-2">{r.title ?? r.name ?? '-'}</td>
               <td className="px-3 py-2">{r.ownerEmail ?? '-'}</td>
               <td className="px-3 py-2">{new Date(r.createdAt).toLocaleString()}</td>
             </tr>

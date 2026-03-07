@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 
@@ -12,11 +13,11 @@ export default function HomeQuickActions() {
 
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then((r) => {
+    supabase.auth.getSession().then((r: { data: { session: Session | null } }) => {
       if (!mounted) return
       setEmail(r.data.session?.user?.email ?? null)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       setEmail(session?.user?.email ?? null)
     })
     return () => { mounted = false; sub.subscription.unsubscribe() }

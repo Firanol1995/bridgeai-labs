@@ -26,6 +26,9 @@ NEXT_PUBLIC_SUPABASE_URL="https://<your>.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="<anon-key>"
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 SUPABASE_BUCKET_NAME="datasets"
+HEALTHCHECK_REQUIRE_DB="0"
+HEALTHCHECK_REQUIRE_SUPABASE="0"
+HEALTHCHECK_REQUIRE_REDIS="0"
 ```
 
 3. Generate Prisma client (already done if you ran `npx prisma generate`):
@@ -48,9 +51,17 @@ Important notes
 - The code contains server-side operations that require a Supabase *service role* key in `SUPABASE_KEY`. Keep this secret out of client bundles.
 - Middleware redirects unauthenticated users to `/login`; API routes verify tokens server-side.
 - The Prisma schema added a UNIQUE constraint on `users.email`. If your DB has duplicate emails, `db push` may fail — inspect and deduplicate before applying to production.
+- The health endpoint treats unconfigured services as `skipped` by default so local builds can stay green. In production, set `HEALTHCHECK_REQUIRE_DB=1`, `HEALTHCHECK_REQUIRE_SUPABASE=1`, and `HEALTHCHECK_REQUIRE_REDIS=1` for the services your deployment depends on.
 
 Deployment
 - Vercel: Add env vars in the Vercel dashboard, build with `npm run build`, and deploy. Ensure `SUPABASE_KEY` is set as a server-only secret.
+- Use [DEPLOYMENT.md](DEPLOYMENT.md) as the source of truth for the production env matrix, verification gate, and go-live sequence.
+
+Startup validation
+- `npm run start` now validates required production env vars before starting Next.js.
+- Required for production startup: `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and one of `SUPABASE_SERVICE_ROLE` or `SUPABASE_KEY`.
+- `REDIS_URL` is required at startup when `USE_QUEUE=1` or `HEALTHCHECK_REQUIRE_REDIS=1`.
+- The validator loads `.env.production.local`, `.env.local`, `.env.production`, and `.env` in that order before checking values.
 
 Next steps
 - Improve UI components and accessibility

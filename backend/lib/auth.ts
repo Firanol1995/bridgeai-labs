@@ -2,7 +2,7 @@ import { supabaseAdmin } from './supabaseServer'
 import prisma from './prisma'
 import logger from './logger'
 
-type SessionUser = { id: string; email?: string; role?: string }
+export type SessionUser = { id: string; email?: string; role?: string }
 
 export async function getUserFromRequest(req: Request): Promise<SessionUser | null> {
   const auth = req.headers.get('authorization')

@@ -20,7 +20,7 @@ export async function openaiEmbedTexts(texts: string[], model = 'text-embedding-
     throw new Error('OpenAI embeddings error: ' + txt)
   }
 
-  const j = await res.json()
+  const j = await res.json() as { data: Array<{ embedding: number[] }> }
   // returns array of vectors matching texts order
   return j.data.map((d: any) => d.embedding as number[])
 }

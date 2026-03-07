@@ -6,8 +6,8 @@ export default function SentryInit() {
   useEffect(() => {
     const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN
     if (!dsn) return
-    // lazy-load @sentry/react only on the client
-    import('@sentry/react')
+    const importer = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>
+    importer('@sentry/react')
       .then(({ init }) => {
         try {
           init({ dsn, tracesSampleRate: 0.1 })

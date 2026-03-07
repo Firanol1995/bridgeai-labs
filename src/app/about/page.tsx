@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getServerBaseUrl } from '@/lib/serverBaseUrl'
 
 export const metadata = {
   title: 'About — BridgeAI Labs',
@@ -8,10 +9,11 @@ export const metadata = {
 export default async function AboutPage() {
   let healthStatus = 'unknown'
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/api/health`, { cache: 'no-store' })
+    const base = await getServerBaseUrl()
+    const res = await fetch(`${base}/api/health`, { cache: 'no-store' })
     if (res.ok) {
       const json = await res.json()
-      healthStatus = json.status ?? 'ok'
+      healthStatus = json.status ?? (json.ok ? 'ok' : 'degraded')
     } else {
       healthStatus = `error (${res.status})`
     }

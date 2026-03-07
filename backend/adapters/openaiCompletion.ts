@@ -24,7 +24,7 @@ export async function openaiChatCompletion(systemPrompt: string, messages: Array
     throw new Error('OpenAI completion error: ' + txt)
   }
 
-  const j = await res.json()
+  const j = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
   const answer = j.choices?.[0]?.message?.content || ''
   return answer
 }

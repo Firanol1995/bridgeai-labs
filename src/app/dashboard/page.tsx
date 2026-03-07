@@ -1,6 +1,8 @@
 import OverviewClient from '../../components/dashboard/OverviewClient'
 import ProjectsTableClient from '../../components/dashboard/ProjectsTableClient'
 import ActivityFeedClient from '../../components/dashboard/ActivityFeedClient'
+import { getServerBaseUrl } from '@/lib/serverBaseUrl'
+import { requirePageAuth } from '@/lib/requirePageAuth'
 
 export const metadata = {
   title: 'Dashboard — BridgeAI Labs',
@@ -8,7 +10,9 @@ export const metadata = {
 }
 
 export default async function DashboardPage() {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  await requirePageAuth('/dashboard')
+
+  const base = await getServerBaseUrl()
   const [metricsRes, activityRes] = await Promise.all([
     fetch(`${base}/api/dashboard/metrics`, { cache: 'no-store' }),
     fetch(`${base}/api/dashboard/activity?limit=25`, { cache: 'no-store' }),

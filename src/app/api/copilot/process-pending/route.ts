@@ -8,8 +8,8 @@ import { supabaseAdmin } from '@/../backend/lib/supabaseServer'
 export async function POST(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
     if (!requireRoleCheck(user, ['admin', 'engineer'])) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: 'Missing OPENAI_API_KEY on server' }, { status: 400 })

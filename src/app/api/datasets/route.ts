@@ -10,8 +10,8 @@ import logger from '@/lib/logger'
 export async function POST(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
 
     const form = await req.formData()
     const file = form.get('file') as File | null
@@ -53,8 +53,8 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
 
     const url = new URL(req.url)
     const projectId = url.searchParams.get('projectId')

@@ -9,12 +9,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'missing required fields' }, { status: 400 })
     }
 
-    // persist to DB
-    try {
-      await prisma.contactRequest.create({ data: { name: name ?? null, email, company: company ?? null, message } })
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn('[contact] db save failed', e)
+    if (process.env.DATABASE_URL) {
+      try {
+        await prisma.contactRequest.create({ data: { name: name ?? null, email, company: company ?? null, message } })
+      } catch (e) {
+        console.warn('[contact] db save failed', e)
+      }
     }
 
     // optional: send email to sales via SendGrid if configured
@@ -35,14 +35,12 @@ export async function POST(req: Request) {
           }),
         })
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.warn('[contact] sendgrid send failed', e)
       }
     }
 
     return NextResponse.json({ status: 'ok' })
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('[contact] error', err)
     return NextResponse.json({ error: 'internal' }, { status: 500 })
   }

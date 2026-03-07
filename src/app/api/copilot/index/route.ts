@@ -3,14 +3,13 @@ import { requireAuth, requireRole as requireRoleCheck } from '@/lib/authMiddlewa
 import { getUserFromRequest } from '@/lib/auth'
 import { openaiEmbedTexts } from '@/../backend/adapters/openaiEmbeddings'
 import { SupabaseVectorStore } from '@/../backend/adapters/supabaseVectorStore'
-import IORedis from 'ioredis'
-import { Queue } from 'bullmq'
+import { createQueue } from '@/../backend/workers/queue'
 
 export async function POST(req: Request) {
   try {
     const authRes = await requireAuth(req as any)
-    if ((authRes as any)?.status) return authRes
-    const user = authRes as any
+    if (authRes instanceof Response) return authRes
+    const user = authRes
     if (!requireRoleCheck(user, ['admin', 'engineer'])) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await req.json()
@@ -45,9 +44,7 @@ export async function POST(req: Request) {
     }
 
     if (useQueue) {
-      const redisUrl = process.env.REDIS_URL || process.env.REDIS || 'redis://127.0.0.1:6379'
-      const connection = new IORedis(redisUrl)
-      const q = new Queue('embeddings', { connection })
+      const { q } = createQueue('embeddings')
       for (const r of records) {
         await q.add('embed', { recordId: r.recordId, projectId, text: r.chunkText, metadata: { ...(metadata || {}), originalRecordId: recordId, chunkIndex: r.chunkIndex } })
       }

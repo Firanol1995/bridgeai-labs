@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
+import type { SessionUser } from '@/../backend/lib/auth'
 
-export async function requireAuth(req: NextRequest) {
+export async function requireAuth(req: NextRequest): Promise<SessionUser | NextResponse> {
   const user = await getUserFromRequest(req as any)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   return user

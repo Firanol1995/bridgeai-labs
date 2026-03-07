@@ -3,10 +3,10 @@ import Link from 'next/link'
 import HomeQuickActions from '@/components/HomeQuickActions'
 import Hero from '@/components/Hero'
 import FocusModal from '@/components/FocusModal'
-import dynamic from 'next/dynamic'
-const Testimonials = dynamic(() => import('@/components/Testimonials'), { ssr: false, loading: () => <div className="p-6 bg-white rounded shadow">Loading testimonials…</div> })
+import Testimonials from '@/components/TestimonialsClient'
 import ContactModal from '@/components/ContactModal'
 import AccessibleAccordion from '@/components/AccessibleAccordion'
+import { getServerBaseUrl } from '@/lib/serverBaseUrl'
 
 type Metrics = { projectsCount?: number; datasetsCount?: number; storageUsed?: number }
 
@@ -14,7 +14,7 @@ export default async function Home() {
   let metrics: Metrics = {}
   let recent: any[] = []
   try {
-    const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+    const base = await getServerBaseUrl()
     const [mRes, pRes] = await Promise.all([
       fetch(`${base}/api/dashboard/metrics`, { cache: 'no-store' }),
       fetch(`${base}/api/projects?page=1&pageSize=5`, { cache: 'no-store' }),

@@ -32,9 +32,16 @@ export default function LoginPage() {
       }
 
       const json = await res.json()
+      const accessToken = json?.data?.session?.access_token
+      const refreshToken = json?.data?.session?.refresh_token
+      if (!accessToken || !refreshToken) {
+        setError('Login succeeded but session tokens were missing')
+        return
+      }
+
       await supabase.auth.setSession({
-        access_token: json?.data?.session?.access_token ?? null,
-        refresh_token: json?.data?.session?.refresh_token ?? null,
+        access_token: accessToken,
+        refresh_token: refreshToken,
       })
 
       router.push('/dashboard')

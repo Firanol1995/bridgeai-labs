@@ -33,7 +33,8 @@ export async function GET(req: Request) {
         chartData.push({ date: start.toISOString().slice(0, 10), uploads })
       }
     } catch (dbErr) {
-      console.warn('[api/dashboard/metrics] db unreachable, returning defaults:', dbErr?.message || dbErr)
+      const message = dbErr instanceof Error ? dbErr.message : String(dbErr)
+      console.warn('[api/dashboard/metrics] db unreachable, returning defaults:', message)
       projectsCount = 0
       datasetsCount = 0
       chartData = []

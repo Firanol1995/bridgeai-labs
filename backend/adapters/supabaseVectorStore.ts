@@ -1,6 +1,14 @@
-import { supabaseAdmin } from '../lib/supabaseServer.ts'
+import { supabaseAdmin } from '../lib/supabaseServer'
 
 export type VectorRecord = {
+  id?: string
+  recordId: string
+  projectId?: string
+  vector: number[]
+  metadata?: Record<string, any>
+}
+
+type StoredVectorRecord = {
   id?: string
   recordId: string
   projectId?: string
@@ -24,14 +32,14 @@ export const SupabaseVectorStore = {
   },
   async query(vector: number[], topK = 10, projectId?: string) {
     // naive kNN: fetch embeddings for the project (or all) and compute cosine similarity in JS
-    let qb = supabaseAdmin.from('ai_embeddings')
+    let qb: any = supabaseAdmin.from('ai_embeddings')
     if (projectId) qb = qb.select('*').eq('project_id', projectId)
     else qb = qb.select('*')
 
     const { data, error } = await qb
     if (error) throw error
 
-    const items = (data || []).map((r: any) => ({
+    const items: StoredVectorRecord[] = (data || []).map((r: any) => ({
       id: r.id,
       recordId: r.record_id,
       projectId: r.project_id,
@@ -40,7 +48,7 @@ export const SupabaseVectorStore = {
     }))
 
     const scored = items
-      .map((it) => ({ item: it, score: cosine(vector, it.vector) }))
+      .map((it: StoredVectorRecord) => ({ item: it, score: cosine(vector, it.vector) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, topK)
 

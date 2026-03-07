@@ -1,8 +1,8 @@
 // `createWorker` is imported dynamically to avoid creating a Redis connection
 // when this module is imported for local testing (runProcessor).
-import { openaiEmbedTexts } from '../adapters/openaiEmbeddings.ts'
-import { PGVectorStore } from '../adapters/pgvectorStore.ts'
-import { SupabaseVectorStore } from '../adapters/supabaseVectorStore.ts'
+import { openaiEmbedTexts } from '../adapters/openaiEmbeddings'
+import { PGVectorStore } from '../adapters/pgvectorStore'
+import { SupabaseVectorStore } from '../adapters/supabaseVectorStore'
 
 export type ProcessRecordInput = {
   recordId: string
@@ -63,7 +63,7 @@ const isMain = fileURLToPath(import.meta.url) === process.argv[1]
 if (isMain) {
   // start worker for 'embeddings' queue
   ;(async () => {
-    const { createWorker } = await import('./queue.ts')
+    const { createWorker } = await import('./queue')
     createWorker('embeddings', processor)
   })()
 }

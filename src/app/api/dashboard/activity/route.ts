@@ -21,7 +21,8 @@ export async function GET(req: Request) {
     try {
       items = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
     } catch (dbErr) {
-      console.warn('[api/dashboard/activity] db unreachable, returning empty list:', dbErr?.message || dbErr)
+      const message = dbErr instanceof Error ? dbErr.message : String(dbErr)
+      console.warn('[api/dashboard/activity] db unreachable, returning empty list:', message)
       items = []
     }
     return NextResponse.json(items)

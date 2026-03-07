@@ -45,10 +45,18 @@ export default function SignupPage() {
       }
 
       const loginJson = await loginRes.json()
+      const accessToken = loginJson?.data?.session?.access_token
+      const refreshToken = loginJson?.data?.session?.refresh_token
+      if (!accessToken || !refreshToken) {
+        setError('Signup succeeded but login session tokens were missing')
+        setLoading(false)
+        return
+      }
+
       // set session in client SDK
       await supabase.auth.setSession({
-        access_token: loginJson?.data?.session?.access_token ?? null,
-        refresh_token: loginJson?.data?.session?.refresh_token ?? null,
+        access_token: accessToken,
+        refresh_token: refreshToken,
       })
 
       router.push('/dashboard')

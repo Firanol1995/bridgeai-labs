@@ -1,9 +1,20 @@
 "use client"
 import React, { useState } from 'react'
-import supabase from '@/lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
 
-export default function ProjectDetailClient({ project, initialDatasets = [] }: any) {
-  const [datasets, setDatasets] = useState(initialDatasets)
+type DatasetRecord = {
+  id: string
+  name: string
+  fileUrl: string
+  createdAt: string | Date
+}
+
+type ProjectRecord = {
+  id: string
+}
+
+export default function ProjectDetailClient({ project, initialDatasets = [] }: { project: ProjectRecord; initialDatasets?: DatasetRecord[] }) {
+  const [datasets, setDatasets] = useState<DatasetRecord[]>(initialDatasets)
   const [uploading, setUploading] = useState(false)
 
   const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -13,14 +24,16 @@ export default function ProjectDetailClient({ project, initialDatasets = [] }: a
     try {
       // upload directly from browser using anon key
       const path = `${project.id}/${Date.now()}_${file.name}`
-      const { data, error } = await supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME ?? 'datasets').upload(path, file, { cacheControl: '3600', upsert: false })
+      const storage = supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME ?? 'datasets')
+      const { data, error } = await storage.upload(path, file, { cacheControl: '3600', upsert: false })
       if (error) {
         console.error('supabase upload error', error)
         alert('Upload failed')
         setUploading(false)
         return
       }
-      const fileUrl = supabase.storage.from(process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME ?? 'datasets').getPublicUrl(data.path).publicUrl
+      const publicUrlResult = storage.getPublicUrl(data.path)
+      const fileUrl = publicUrlResult?.data?.publicUrl ?? publicUrlResult?.publicUrl ?? ''
 
       // notify server to create metadata record
       const fd = new FormData()
@@ -31,8 +44,8 @@ export default function ProjectDetailClient({ project, initialDatasets = [] }: a
 
       const res = await fetch('/api/datasets', { method: 'POST', body: fd })
       if (res.ok) {
-        const d = await res.json()
-        setDatasets(prev => [d, ...prev])
+        const d = await res.json() as DatasetRecord
+        setDatasets((prev) => [d, ...prev])
       } else {
         alert('Failed to register dataset')
       }
@@ -67,7 +80,7 @@ export default function ProjectDetailClient({ project, initialDatasets = [] }: a
             </tr>
           </thead>
           <tbody>
-            {datasets.map((d: any) => (
+            {datasets.map((d) => (
               <tr key={d.id} className="border-t">
                 <td className="px-3 py-2"><a className="text-blue-600" href={d.fileUrl} target="_blank" rel="noreferrer">{d.name}</a></td>
                 <td className="px-3 py-2">{new Date(d.createdAt).toLocaleString()}</td>
