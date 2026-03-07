@@ -17,9 +17,9 @@ export async function GET(req: Request) {
     const type = url.searchParams.get('type') || 'projects'
 
     if (type === 'projects') {
-      const rows = await prisma.project.findMany({ include: { user: true } })
+      const rows = await prisma.project.findMany({ include: { owner: true } })
       const csv = ['id,title,description,ownerEmail,createdAt']
-      for (const r of rows) csv.push(`${r.id},"${(r.title||'').replace(/"/g,'""')}","${(r.description||'').replace(/"/g,'""')}",${r.user?.email ?? ''},${r.createdAt.toISOString()}`)
+      for (const r of rows) csv.push(`${r.id},"${(r.title||'').replace(/"/g,'""')}","${(r.description||'').replace(/"/g,'""')}",${r.owner?.email ?? ''},${r.createdAt.toISOString()}`)
       return new NextResponse(csv.join('\n'), { headers: { 'Content-Type': 'text/csv', 'Content-Disposition': 'attachment; filename="projects.csv"' } })
     }
 

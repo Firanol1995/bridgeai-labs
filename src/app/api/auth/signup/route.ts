@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseServer'
 import logger from '@/lib/logger'
 
+function readEnv(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -29,8 +37,8 @@ export async function POST(req: Request) {
       // If the service key call failed due to an API key mismatch, try a direct REST fallback
       if (String(err.message).includes('InvalidApiKey') || String(err.message).toLowerCase().includes('invalid api key')) {
         try {
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-          const serviceKey = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_KEY
+          const supabaseUrl = readEnv('NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL')
+          const serviceKey = readEnv('SUPABASE_SERVICE_ROLE', 'SUPABASE_KEY')
           if (!supabaseUrl || !serviceKey) {
             return NextResponse.json({ error: 'Missing Supabase server env for fallback' }, { status: 500 })
           }

@@ -18,14 +18,14 @@ export async function GET(req: Request) {
     const pageSize = Math.min(100, Math.max(5, Number(url.searchParams.get('pageSize') || '10')))
 
     if (id) {
-      const item = await prisma.project.findFirst({ where: { id, userId: user.id } })
+      const item = await prisma.project.findFirst({ where: { id, ownerId: user.id } })
       if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 })
       return NextResponse.json(item)
     }
 
     const [items, total] = await Promise.all([
-      prisma.project.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
-      prisma.project.count({ where: { userId: user.id } }),
+      prisma.project.findMany({ where: { ownerId: user.id }, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
+      prisma.project.count({ where: { ownerId: user.id } }),
     ])
 
     return NextResponse.json({ items, total, page, pageSize })
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     const parsed = CreateProjectSchema.safeParse(body)
     if (!parsed.success) return NextResponse.json({ error: 'Invalid payload', details: parsed.error.format() }, { status: 400 })
 
-    const project = await prisma.project.create({ data: { userId: user.id, title: parsed.data.title, description: parsed.data.description ?? null } })
+    const project = await prisma.project.create({ data: { ownerId: user.id, title: parsed.data.title, description: parsed.data.description ?? null } })
 
     await logActivity(user.id, 'project.create', { projectId: project.id })
     return NextResponse.json(project, { status: 201 })
@@ -74,7 +74,7 @@ export async function DELETE(req: Request) {
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
     const project = await prisma.project.findUnique({ where: { id } })
-    if (!project || project.userId !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    if (!project || project.ownerId !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     await prisma.project.delete({ where: { id } })
     await logActivity(user.id, 'project.delete', { projectId: id })

@@ -1,8 +1,16 @@
 // Lazy-load the real `@supabase/supabase-js` at runtime when available.
 // If it's not installed in the dev environment, provide a minimal fallback
 // implementation so server routes can still run without the real client.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_KEY
+function readEnv(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
+const supabaseUrl = readEnv('NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL')
+const supabaseServiceKey = readEnv('SUPABASE_SERVICE_ROLE', 'SUPABASE_KEY')
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.warn('Missing Supabase server environment variables; continuing with fallback admin client for local dev')

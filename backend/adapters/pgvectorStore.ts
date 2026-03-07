@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 
 export type PGVectorRecord = {
@@ -21,12 +22,15 @@ export const PGVectorStore = {
 
   // Query nearest neighbors using pgvector <-> operator
   async query(vector: number[], topK = 10, projectId?: string) {
-    const projFilter = projectId ? prisma.$queryRawUnsafe(`AND project_id = ${projectId}`) : ''
+    const whereClause = projectId
+      ? Prisma.sql`project_id = ${projectId}`
+      : Prisma.sql`true`
+
     // Using parameterized raw SQL for the vector query
     const rows: any[] = await prisma.$queryRaw`
       SELECT id, record_id, project_id, metadata, embedding
       FROM ai_embeddings_vector
-      WHERE (${projectId ? prisma.raw('project_id = ' + projectId) : prisma.raw('true')})
+      WHERE ${whereClause}
       ORDER BY embedding <-> ${vector}
       LIMIT ${topK}
     `
@@ -36,7 +40,7 @@ export const PGVectorStore = {
 
   async delete(recordIds: string[]) {
     await prisma.$executeRaw`
-      DELETE FROM ai_embeddings_vector WHERE record_id IN (${prisma.join(recordIds)})
+      DELETE FROM ai_embeddings_vector WHERE record_id IN (${Prisma.join(recordIds)})
     `
   },
 }

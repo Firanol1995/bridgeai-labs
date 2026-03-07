@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     // verify project ownership
     const project = await prisma.project.findUnique({ where: { id: projectId } })
-    if (!project || project.userId !== user.id) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 })
+    if (!project || project.ownerId !== user.id) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 })
 
     // Server-side upload if client didn't upload directly
     let publicUrl = ''
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 
     // ensure the project belongs to the user
     const project = await prisma.project.findUnique({ where: { id: projectId } })
-    if (!project || project.userId !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    if (!project || project.ownerId !== user.id) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const datasets = await prisma.dataset.findMany({ where: { projectId }, orderBy: { createdAt: 'desc' } })
     return NextResponse.json(datasets)

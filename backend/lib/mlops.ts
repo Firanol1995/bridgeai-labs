@@ -16,9 +16,13 @@ export async function recordModelMetric(modelVersionId: string, metrics: Record<
   // Append metrics to the ModelVersion.metrics (merge semantics)
   const mv = await prisma.modelVersion.findUnique({ where: { id: modelVersionId } })
   if (!mv) throw new Error('model version not found')
+  const existingMetrics = mv.metrics && typeof mv.metrics === 'object' && !Array.isArray(mv.metrics)
+    ? mv.metrics as Record<string, any>
+    : {}
+
   const updated = await prisma.modelVersion.update({
     where: { id: modelVersionId },
-    data: { metrics: { ...(mv.metrics || {}), ...metrics } },
+    data: { metrics: { ...existingMetrics, ...metrics } },
   })
   return updated
 }

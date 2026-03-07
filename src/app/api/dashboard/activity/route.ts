@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     const parsedUrl = new URL(req.url)
     const limit = Math.min(100, Number(parsedUrl.searchParams.get('limit') || '25'))
 
-    let items = []
+    let items: Awaited<ReturnType<typeof prisma.activityLog.findMany>> = []
     try {
       items = await prisma.activityLog.findMany({ orderBy: { createdAt: 'desc' }, take: limit })
     } catch (dbErr) {

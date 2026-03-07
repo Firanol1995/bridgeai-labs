@@ -3,19 +3,32 @@ import prisma from '@/lib/prisma'
 import IORedis from 'ioredis'
 import logger from '@/lib/logger'
 
+function readEnv(...names: string[]) {
+  for (const name of names) {
+    const value = process.env[name]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
 function isEnabled(value: string | undefined) {
-  return ['1', 'true', 'yes', 'on'].includes(String(value || '').toLowerCase())
+  return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase())
 }
 
 export async function GET() {
   try {
-    const requireDb = isEnabled(process.env.HEALTHCHECK_REQUIRE_DB)
-    const requireSupabase = isEnabled(process.env.HEALTHCHECK_REQUIRE_SUPABASE)
-    const requireRedis = isEnabled(process.env.HEALTHCHECK_REQUIRE_REDIS)
+    const requireDb = isEnabled(readEnv('HEALTHCHECK_REQUIRE_DB'))
+    const requireSupabase = isEnabled(readEnv('HEALTHCHECK_REQUIRE_SUPABASE'))
+    const requireRedis = isEnabled(readEnv('HEALTHCHECK_REQUIRE_REDIS'))
 
-    const dbConfigured = Boolean(process.env.DATABASE_URL)
-    const supabaseConfigured = Boolean(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)
-    const redisConfigured = Boolean(process.env.REDIS_URL || process.env.REDIS)
+    const dbUrl = readEnv('DATABASE_URL')
+    const supabaseUrl = readEnv('NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL')
+    const supabasePublicKey = readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY')
+    const redisUrl = readEnv('REDIS_URL', 'REDIS')
+
+    const dbConfigured = Boolean(dbUrl)
+    const supabaseConfigured = Boolean(supabaseUrl)
+    const redisConfigured = Boolean(redisUrl)
 
     const checks = {
       db: { required: requireDb, configured: dbConfigured, ok: !requireDb && !dbConfigured, status: 'skipped' as 'ok' | 'degraded' | 'skipped' },
@@ -28,23 +41,25 @@ export async function GET() {
         await prisma.$queryRaw`SELECT 1`
         checks.db.ok = true
         checks.db.status = 'ok'
-      } catch {
+      } catch (err) {
         checks.db.ok = false
         checks.db.status = 'degraded'
       }
     }
 
-    const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-    if (supaUrl && (supabaseConfigured || requireSupabase)) {
-      const res = await fetch(supaUrl, { method: 'GET' }).catch(() => null)
+    if (supabaseUrl && (supabaseConfigured || requireSupabase)) {
+      const healthUrl = new URL('/auth/v1/health', supabaseUrl).toString()
+      const res = await fetch(healthUrl, {
+        method: 'GET',
+        headers: supabasePublicKey ? { apikey: supabasePublicKey } : undefined,
+      }).catch(() => null)
       checks.supabase.ok = !!res?.ok
       checks.supabase.status = res?.ok ? 'ok' : 'degraded'
       checks.supabase.httpStatus = res?.status ?? null
     }
 
     if (redisConfigured || requireRedis) {
-      const redisUrl = process.env.REDIS_URL || process.env.REDIS || 'redis://127.0.0.1:6379'
-      const redis = new IORedis(redisUrl, { maxRetriesPerRequest: 1, lazyConnect: true })
+      const redis = new IORedis(redisUrl || 'redis://127.0.0.1:6379', { maxRetriesPerRequest: 1, lazyConnect: true })
       try {
         await redis.connect()
         const pong = await redis.ping()
