@@ -9,12 +9,14 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setMessage(null)
 
     try {
       const res = await fetch('/api/auth/signup', {
@@ -26,6 +28,25 @@ export default function SignupPage() {
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
         setError(json?.error ?? `Signup failed: ${res.status}`)
+        setLoading(false)
+        return
+      }
+
+      const signupJson = await res.json().catch(() => ({}))
+      const signupSession = signupJson?.data?.session
+      const signupUser = signupJson?.data?.user
+
+      if (signupSession?.access_token && signupSession?.refresh_token) {
+        await supabase.auth.setSession({
+          access_token: signupSession.access_token,
+          refresh_token: signupSession.refresh_token,
+        })
+        router.push('/dashboard')
+        return
+      }
+
+      if (signupUser) {
+        setMessage('Signup succeeded. Check your email to confirm your account, then log in.')
         setLoading(false)
         return
       }
@@ -94,6 +115,7 @@ export default function SignupPage() {
         </div>
 
         {error && <div className="text-red-600">{error}</div>}
+        {message && <div className="text-green-700">{message}</div>}
 
         <div>
           <button
