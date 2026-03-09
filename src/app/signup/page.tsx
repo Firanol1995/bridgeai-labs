@@ -89,48 +89,51 @@ export default function SignupPage() {
   }
 
   return (
-    <section className="max-w-md mx-auto p-8">
-      <h1 className="text-2xl font-bold mb-4">Sign up</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
+    <section className="mx-auto max-w-md px-4 py-16">
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-900 shadow-2xl">
+        <h1 className="mb-2 text-2xl font-bold text-slate-950">Sign up</h1>
+        <p className="mb-6 text-sm text-slate-600">Create your account to explore projects, datasets, and enterprise workflows.</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Email</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             type="email"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:outline-none"
             required
           />
-        </div>
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Password</label>
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Password</label>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             type="password"
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white focus:outline-none"
             required
           />
-        </div>
+          </div>
 
-        {error && <div className="text-red-600">{error}</div>}
-        {message && <div className="text-green-700">{message}</div>}
+          {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+          {message && <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{message}</div>}
 
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md"
-          >
-            {loading ? 'Creating account…' : 'Create account'}
-          </button>
-        </div>
-      </form>
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {loading ? 'Creating account…' : 'Create account'}
+            </button>
+          </div>
+        </form>
 
-      <p className="mt-4 text-sm">
-        Already have an account? <a href="/login" className="text-blue-600">Log in</a>
-      </p>
+        <p className="mt-4 text-sm text-slate-600">
+          Already have an account? <a href="/login" className="font-medium text-blue-600 hover:text-blue-700">Log in</a>
+        </p>
+      </div>
     </section>
   )
 }

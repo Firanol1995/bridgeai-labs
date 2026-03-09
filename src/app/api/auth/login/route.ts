@@ -10,6 +10,25 @@ function readEnv(...names: string[]) {
   return ''
 }
 
+function mapAuthError(error: { message?: string; code?: string; status?: number } | null | undefined) {
+  const message = String(error?.message ?? '').toLowerCase()
+  const code = String(error?.code ?? '').toLowerCase()
+
+  if (code === 'email_not_confirmed' || message.includes('email not confirmed')) {
+    return 'Please confirm your email address before logging in.'
+  }
+
+  if (message.includes('rate limit') || message.includes('too many requests') || code.includes('over_email_send_rate_limit')) {
+    return 'Too many login attempts right now. Please wait a few minutes and try again.'
+  }
+
+  if (code === 'invalid_credentials' || message.includes('invalid login credentials')) {
+    return 'Incorrect email or password.'
+  }
+
+  return error?.message ?? 'Login failed.'
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
@@ -34,7 +53,7 @@ export async function POST(req: Request) {
       const { data, error } = await supabaseAuth.auth.signInWithPassword({ email, password })
       if (error) {
         logger.error('[POST /api/auth/login] supabase error', error)
-        return NextResponse.json({ error: error.message, details: error }, { status: 400 })
+        return NextResponse.json({ error: mapAuthError(error), details: error }, { status: error.status || 400 })
       }
 
       // return session to client (client will call supabase.auth.setSession)
